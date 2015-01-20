@@ -1,0 +1,10 @@
+#ifndef JSON_EXPRESSION_BUILDER_H_INCLUDED
+#define JSON_EXPRESSION_BUILDER_H_INCLUDED
+
+#include "Parser.hpp"
+
+namespace JsonParser
+{
+
+}
+#endif // JSON_EXPRESSION_BUILDER_H_INCLUDED
