@@ -50,6 +50,17 @@ namespace JParser
             StringBuffer& operator=( StringBuffer const & strbuf ) = delete;
             StringBuffer( StringBuffer const & ) = delete;
 
+            StringBuffer& operator=( StringBuffer && buf )
+            {
+                if( this != &buf ){
+                    free( data );
+                    data = buf.data; buf.data = nullptr;
+                    current = buf.current; buf.current = nullptr;
+                    end = buf.end; buf.end = nullptr;
+                    size = buf.size; buf.size = 0;
+                }
+                return *this;
+            }
             ~StringBuffer()
             {
                 free( data );

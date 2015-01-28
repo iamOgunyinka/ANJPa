@@ -11,7 +11,7 @@ namespace JParser
     {
         inline namespace JErrorMessages
         {
-            struct InvalidSymbol: virtual std::runtime_error { InvalidSymbol(): std::runtime_error( "Invalid Symbol found\n" ){} };
+            struct InvalidToken: virtual std::runtime_error { InvalidToken(): std::runtime_error( "Invalid Token found\n" ){} };
             struct EndOfString: virtual std::runtime_error { EndOfString( char const * ch ): std::runtime_error( ch ) {} };
         }
         
@@ -38,22 +38,31 @@ namespace JParser
         using namespace HelperFunctions;
         using namespace Support;
         
-        struct Symbol
+        struct Token
         {
-            Symbol( char const &c, TokenType tk ):
+            Token( char const &c, TokenType tk ):
                 str_value( 2 ),
                 token( tk )
             {
                 str_value.append( c );
             }
+            Token( Token const & ) = default;
+            Token( Token && ) = default;
             
-            Symbol( StringBuffer && strbuf, TokenType tk ):
+            Token& operator =( Token && tok )
+            {
+                str_value = std::move( tok.str_value );
+                token = std::move( tok.token );
+                return *this;
+            }
+            
+            Token( StringBuffer && strbuf, TokenType tk ):
                 str_value( std::move( strbuf ) ),
                 token( tk )
             {
             }
             
-            Symbol( char const *ch, TokenType tk ):
+            Token( char const *ch, TokenType tk ):
                 str_value( ch ),
                 token( tk )
             {
@@ -64,9 +73,9 @@ namespace JParser
                 return str_value;
             }
             
-            static inline Symbol punctuator( char const *buf, TokenType tk )
+            static inline Token punctuator( char const *buf, TokenType tk )
             {
-                return Symbol{ buf, tk };
+                return Token{ buf, tk };
             }
             
         private:
@@ -110,7 +119,7 @@ namespace JParser
                 return current_index >= end_of_file;
             }
 
-            Symbol get_next_token()
+            Token get_next_token()
             {
                 for( ; ; )
                 {
@@ -121,22 +130,22 @@ namespace JParser
                             continue;
                         case '{':
                             update_current_token();
-                            return Symbol::punctuator( "{", TokenType::Open_Braces );
+                            return Token::punctuator( "{", TokenType::Open_Braces );
                         case '}':
                             update_current_token();
-                            return Symbol::punctuator( "}", TokenType::Close_Braces );
+                            return Token::punctuator( "}", TokenType::Close_Braces );
                         case '[':
                             update_current_token();
-                            return Symbol::punctuator( "[", TokenType::Open_Sqbrac );
+                            return Token::punctuator( "[", TokenType::Open_Sqbrac );
                         case ']':
                             update_current_token();
-                            return Symbol::punctuator( "]", TokenType::Close_Sqbrac );
+                            return Token::punctuator( "]", TokenType::Close_Sqbrac );
                         case ':':
                             update_current_token();
-                            return Symbol::punctuator( ":", TokenType::Colon );
+                            return Token::punctuator( ":", TokenType::Colon );
                         case ',':
                             update_current_token();
-                            return Symbol::punctuator( ",", TokenType::Comma );
+                            return Token::punctuator( ",", TokenType::Comma );
                         case '"':
                             return extract_string_literals();
                         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case '0': case '-':
@@ -147,12 +156,12 @@ namespace JParser
                             return extract_null_literals();
                         default:
                             update_current_token();
-                            throw InvalidSymbol{ };
+                            throw InvalidToken{ };
                     }
                 }
             }
 
-            Symbol extract_string_literals()
+            Token extract_string_literals()
             {
                 StringBuffer string_extracted {};
                 update_current_token();
@@ -175,7 +184,7 @@ namespace JParser
                                 break;
 
                             default:
-                                JLexer::InvalidSymbol{};
+                                JLexer::InvalidToken{};
 
                         }
                     } else if( eof() ) {
@@ -184,10 +193,10 @@ namespace JParser
                     string_extracted.append( current_character );
                     update_current_token();
                 }
-                return Symbol{ std::move( string_extracted ), TokenType::String };
+                return Token{ std::move( string_extracted ), TokenType::String };
             }
 
-            Symbol extract_integer_literals()
+            Token extract_integer_literals()
             {
                 StringBuffer buf;
 
@@ -196,25 +205,25 @@ namespace JParser
                     update_current_token();
                 }
                 
-                return Symbol { std::move( buf ), TokenType::Integer };
+                return Token { std::move( buf ), TokenType::Integer };
             }
 
-            Symbol extract_null_literals()
+            Token extract_null_literals()
             {
                 char const * null_value = "null";
                 StringBuffer buf( 5 );
                 
                 for( int i = 0; i != 4; ++i ){
                     if( current_character != null_value[ i ] ){
-                        throw JErrorMessages::InvalidSymbol{};
+                        throw JErrorMessages::InvalidToken{};
                     }
                     buf.append( current_character );
                     update_current_token();
                 }
-                return Symbol{ std::move( buf ), TokenType::Null };
+                return Token{ std::move( buf ), TokenType::Null };
             }
             
-            Symbol extract_boolean_literals()
+            Token extract_boolean_literals()
             {
                 char const *true_bool = "true", *false_bool = "false";
                 
@@ -222,20 +231,20 @@ namespace JParser
                     if( memcmp( strbuf.data + current_index - 1, true_bool, 4 ) == 0 ){
                         current_index += 3;
                         update_current_token();
-                        return Symbol{ true_bool, TokenType::Boolean };
+                        return Token{ true_bool, TokenType::Boolean };
                     } else {
-                        throw JErrorMessages::InvalidSymbol{};
+                        throw JErrorMessages::InvalidToken{};
                     }
                 } else if ( current_character == 'f' ){
                     if( memcmp( strbuf.data + current_index - 1, false_bool, 5 ) == 0 ){
                         current_index += 4;
                         update_current_token();
-                        return Symbol{ false_bool, TokenType::Boolean };
+                        return Token{ false_bool, TokenType::Boolean };
                     } else {
-                        throw JErrorMessages::InvalidSymbol {};
+                        throw JErrorMessages::InvalidToken {};
                     }
                 }
-                return Symbol { "", TokenType::Invalid };
+                return Token { "", TokenType::Invalid };
             }
         };
     }
