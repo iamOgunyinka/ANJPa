@@ -5,21 +5,6 @@ stmt        -> st Helper
 Helper      -> ',' st Helper | Epsilon
 st            -> string ':' value
 value       -> terminals | '[' args ']' | '{' stmt '}'
-args        -> args, value | value
-terminals -> null | true | false | string | integerlse | string | integer) should take a variadic list of json types( string, an object, boolean, null etc ) separated by comma but the grammar defined above fails horribly at that. Now, if I try to add another production to the 'value' non-terminal, I thought that would be the production below and failure again!
-
-value   -> ... | value, value
-
-The full grammar( SDD omitted ) can be found here:
-
-program -> block
-block      -> '{' stmts '}'
-stmts      -> stmts stmt | Epsilon
-stmt        -> st R
-R             -> ',' st R | Epsilon
-st            -> string ':' value
-value       -> term | '[' value ']' | '{' stmt '}'
-
-where string && term are terminals
-
-eliminating epsilon production
+args        -> value R
+R	    -> ',' value R | Epsilon
+terminals -> null | true | false | string | integerlse | string | integer
