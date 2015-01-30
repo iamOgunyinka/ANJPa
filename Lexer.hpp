@@ -11,7 +11,7 @@ namespace JParser
     {
         inline namespace JErrorMessages
         {
-            struct InvalidToken: virtual std::runtime_error { InvalidToken(): std::runtime_error( "Invalid Token found\n" ){} };
+            struct InvalidToken: virtual std::runtime_error { InvalidToken( std::string const & err ): std::runtime_error( err ){} };
             struct EndOfString: virtual std::runtime_error { EndOfString( char const * ch ): std::runtime_error( ch ) {} };
         }
         
@@ -41,36 +41,41 @@ namespace JParser
         struct Token
         {
             Token( char const &c, TokenType tk ):
-                str_value( 2 ),
-                token( tk )
+                lexeme( 2 ),
+                type( tk )
             {
-                str_value.append( c );
+                lexeme.append( c );
             }
             Token( Token const & ) = default;
             Token( Token && ) = default;
             
             Token& operator =( Token && tok )
             {
-                str_value = std::move( tok.str_value );
-                token = std::move( tok.token );
+                lexeme = std::move( tok.lexeme );
+                type = std::move( tok.type );
                 return *this;
             }
             
             Token( StringBuffer && strbuf, TokenType tk ):
-                str_value( std::move( strbuf ) ),
-                token( tk )
+                lexeme( std::move( strbuf ) ),
+                type( tk )
             {
             }
             
             Token( char const *ch, TokenType tk ):
-                str_value( ch ),
-                token( tk )
+                lexeme( ch ),
+                type( tk )
             {
             }
 
-            const StringBuffer& get_string() const
+            const StringBuffer& get_lexeme() const
             {
-                return str_value;
+                return lexeme;
+            }
+
+            TokenType get_type () const
+            {
+                return type;
             }
             
             static inline Token punctuator( char const *buf, TokenType tk )
@@ -79,8 +84,8 @@ namespace JParser
             }
             
         private:
-            StringBuffer str_value;
-            TokenType token;
+            StringBuffer lexeme;
+            TokenType type;
         };
         
         struct Lexer
@@ -93,8 +98,8 @@ namespace JParser
             
         public:
             Lexer() = delete;
-            explicit Lexer( char const * json_file ):
-                strbuf{ json_file },
+            explicit Lexer( char const * json_string ):
+                strbuf{ json_string },
                 current_index { 0 },
                 end_of_file { strbuf.length() },
                 current_character{ }
@@ -102,6 +107,10 @@ namespace JParser
                 update_current_token();
             }
 
+            explicit Lexer( std::string const & json_string ):
+                Lexer { json_string.c_str() }
+            {
+            }
         private:
             inline void update_current_token()
             {
@@ -156,7 +165,7 @@ namespace JParser
                             return extract_null_literals();
                         default:
                             update_current_token();
-                            throw InvalidToken{ };
+                            throw InvalidToken{ "Invalid Token found" };
                     }
                 }
             }
@@ -184,7 +193,7 @@ namespace JParser
                                 break;
 
                             default:
-                                JLexer::InvalidToken{};
+                                JLexer::InvalidToken{ "Invalid Token found" };
 
                         }
                     } else if( eof() ) {
@@ -215,7 +224,7 @@ namespace JParser
                 
                 for( int i = 0; i != 4; ++i ){
                     if( current_character != null_value[ i ] ){
-                        throw JErrorMessages::InvalidToken{};
+                        throw JErrorMessages::InvalidToken{ "Invalid Token found" };
                     }
                     buf.append( current_character );
                     update_current_token();
@@ -233,7 +242,7 @@ namespace JParser
                         update_current_token();
                         return Token{ true_bool, TokenType::Boolean };
                     } else {
-                        throw JErrorMessages::InvalidToken{};
+                        throw JErrorMessages::InvalidToken{ "Invalid Token found" };
                     }
                 } else if ( current_character == 'f' ){
                     if( memcmp( strbuf.data + current_index - 1, false_bool, 5 ) == 0 ){
@@ -241,7 +250,7 @@ namespace JParser
                         update_current_token();
                         return Token{ false_bool, TokenType::Boolean };
                     } else {
-                        throw JErrorMessages::InvalidToken {};
+                        throw JErrorMessages::InvalidToken {"Invalid Token found" };
                     }
                 }
                 return Token { "", TokenType::Invalid };
