@@ -16,7 +16,16 @@ namespace JParser
         virtual JsonType get_type ( void ) const = 0;
         virtual void add_element( json_expr expr ) = 0;
         virtual std::string get_key () const = 0;
+        virtual std::string get_value () = 0;
         virtual size_t size() const = 0;
+        virtual json_expr& operator []( size_t ) = 0;
+
+        virtual bool isNull() const = 0;
+        virtual bool isBoolean() const = 0;
+        virtual bool isInteger() const = 0;
+        virtual bool isString() const = 0;
+        virtual bool isArray() const = 0;
+        virtual bool isObject() const = 0;
     };
 
     typedef JsonExpression::json_expr json_expr;
@@ -34,7 +43,10 @@ namespace JParser
         virtual std::string get_key() const override { return child.first; }
         virtual void add_element( json_expr ) override { }
         virtual std::string get_value() { return child.second; }
-        virtual const std::string get_value() const { return child.second; }
+        virtual json_expr& operator []( size_t i ) { return dynamic_cast< json_expr &>( *this ); }
+
+        virtual bool isArray() const { return false; }
+        virtual bool isObject() const { return false; }
     };
 
     struct JsonBinaryExpression: JsonExpression
@@ -46,6 +58,7 @@ namespace JParser
 
         JsonBinaryExpression( std::string const & name ): child{ name, {} } {}
         virtual std::string get_key() const override { return child.first; }
+        virtual std::string get_value() override { return ""; }
         virtual void add_element( json_expr expr ) override { child.second.push_back( expr ); }
 
         json_expr_array::iterator begin() { return child.second.begin(); }
@@ -53,8 +66,14 @@ namespace JParser
 
         json_expr_array::iterator end() { return child.second.end(); }
         json_expr_array::const_iterator cend() const { return child.second.cend(); }
+        virtual json_expr& operator []( size_t i ) { return child.second[ i ]; }
         
         virtual size_type size() const { return child.second.size(); }
+
+        virtual bool isNull() const override { return false; }
+        virtual bool isBoolean() const override { return false; }
+        virtual bool isInteger() const override { return false; }
+        virtual bool isString() const override { return false; }
     };
     
     struct JObject: public JsonBinaryExpression
@@ -62,6 +81,10 @@ namespace JParser
     public:
         JObject( std::string const & name ): JsonBinaryExpression{ name } { }
         virtual JsonType get_type() const final { return JsonType::Object; }
+
+        virtual bool isArray() const { return false; }
+        virtual bool isObject() const { return true; }
+
     };
 
     struct JArray: public JsonBinaryExpression
@@ -70,6 +93,9 @@ namespace JParser
         JArray( std::string const & name ): JsonBinaryExpression { name } { }
         json_expr& operator []( size_t i ) { return child.second[ i ]; }
         virtual JsonType get_type() const final { return JsonType::Array; }
+
+        virtual bool isArray() const { return true; }
+        virtual bool isObject() const { return false; }
     };
 
     using namespace Support;
@@ -80,25 +106,46 @@ namespace JParser
         virtual JsonType get_type () const final { return JsonType::String; }
         JString( std::string const & name, std::string const & value ): JsonTerminalExpression{ name, value }
         {
-        }        
+        }
+        virtual json_expr& operator []( size_t i ) { return dynamic_cast< json_expr &>( *this ); }
+
+        virtual bool isNull() const override { return false; }
+        virtual bool isBoolean() const override { return false; }
+        virtual bool isInteger() const override { return false; }
+        virtual bool isString() const override { return true; }
     };
 
     struct JInteger: public JsonTerminalExpression
     {
         virtual JsonType get_type () const final { return JsonType::Integer; }
         JInteger( std::string const & name, std::string const & value ): JsonTerminalExpression { name, value } {}
+
+        virtual bool isNull() const override { return false; }
+        virtual bool isBoolean() const override { return false; }
+        virtual bool isInteger() const override { return true; }
+        virtual bool isString() const override { return false; }
     };
 
     struct JNull: public JsonTerminalExpression
     {
         virtual JsonType get_type() const final { return JsonType::Null; }
         JNull( std::string const & name, std::string const & value ): JsonTerminalExpression{ name, value } {}
+
+        virtual bool isNull() const override { return true; }
+        virtual bool isBoolean() const override { return false; }
+        virtual bool isInteger() const override { return false; }
+        virtual bool isString() const override { return false; }
     };
     
     struct JBoolean: public JsonTerminalExpression
     {
         virtual JsonType get_type() const final { return JsonType::Boolean; }
         JBoolean( std::string const &name, std::string const &value ): JsonTerminalExpression { name, value } {}
+
+        virtual bool isNull() const override { return false; }
+        virtual bool isBoolean() const override { return true; }
+        virtual bool isInteger() const override { return false; }
+        virtual bool isString() const override { return false; }
     };
 
     inline namespace HelperFunctions

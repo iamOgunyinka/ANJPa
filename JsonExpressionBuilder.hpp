@@ -16,12 +16,13 @@ namespace JsonParser
         ~Parser();
     public:
         void init_parser();
-
+        /*
         json_expr begin() { return root->begin(); }
         json_expr end() { return root->end(); }
 
         const_json_expr cbegin() const { return root->cbegin(); }
         const_json_expr cend() const { return root->cend(); }
+        */
         json_expr get_object() { return root; }
         
         size_t size() const { return root->size(); }
@@ -65,13 +66,13 @@ namespace JsonParser
         if( current_token.get_type() != TokenType::Open_Braces ){
             throw JErrorMessages::InvalidToken { "Invalid Token found" };
         }
-        node = make_object( "" );
+        node = make_object( "__ROOT_ELEMENT__" );
 
         current_token = lexer.get_next_token();
         statements( node );
 
         if( current_token.get_type() != TokenType::Close_Braces ) {
-            throw JErrorMessages::InvalidToken { "Invalid Token found" };
+            throw JErrorMessages::InvalidToken { "In block...start...Invalid Token found" };
         }
     }
 
@@ -94,7 +95,7 @@ namespace JsonParser
         if( current_token.get_type() != TokenType::Comma ){
             return;
         }
-
+        current_token = lexer.get_next_token();
         stmt( node );
         other_statements_helper( node );
     }
@@ -102,7 +103,7 @@ namespace JsonParser
     void Parser::stmt( json_expr & node )
     {
         if( current_token.get_type() != TokenType::String ){
-            throw JErrorMessages::InvalidToken { "Expected a string before" + current_token.get_lexeme().to_string() };
+            throw JErrorMessages::InvalidToken { "Expected a string before '" + current_token.get_lexeme().to_string() + "'" };
         }
 
         auto saved_token_name = current_token.get_lexeme().to_string();
@@ -151,8 +152,7 @@ namespace JsonParser
                 node->add_element( value_consumer );
                 match( '}', current_token );
             default:
-                throw JErrorMessages::InvalidToken { "Invalid Token found" };
-                break;
+                return;
         }
     }
 
@@ -165,16 +165,16 @@ namespace JsonParser
     void Parser::other_array_arguments( json_expr & node )
     {
         if( current_token.get_type() == TokenType::Comma ){
+            current_token = lexer.get_next_token();
             value( "", node );
             other_array_arguments( node );
         }
-        return;
     }
     
     void Parser::match( char ch, Token & tk )
     {
         if( ch != tk.get_lexeme().to_string()[0] ){
-            throw JErrorMessages::InvalidToken { "Expected a string before" + current_token.get_lexeme().to_string() };
+            throw JErrorMessages::InvalidToken { "Expected a string before '" + current_token.get_lexeme().to_string() + "'" };
         }
         tk = lexer.get_next_token();
     }
