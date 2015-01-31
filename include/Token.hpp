@@ -8,8 +8,8 @@ namespace JParser
         Invalid = -1,
         Open_Braces = 0,
         Close_Braces,
-        Open_Sqbrac, //square bracket
-        Close_Sqbrac,
+        Open_SquareBracket,
+        Close_SquareBracket,
         Comma,
         Colon,
         String,

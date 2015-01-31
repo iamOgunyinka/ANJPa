@@ -92,8 +92,8 @@ namespace JParser
         {
         private:
             StringBuffer strbuf;
-            size_t current_index;
-            size_t end_of_file;
+            std::size_t current_index;
+            std::size_t end_of_file;
             char current_character;
             
         public:
@@ -145,10 +145,10 @@ namespace JParser
                             return Token::punctuator( "}", TokenType::Close_Braces );
                         case '[':
                             update_current_token();
-                            return Token::punctuator( "[", TokenType::Open_Sqbrac );
+                            return Token::punctuator( "[", TokenType::Open_SquareBracket );
                         case ']':
                             update_current_token();
-                            return Token::punctuator( "]", TokenType::Close_Sqbrac );
+                            return Token::punctuator( "]", TokenType::Close_SquareBracket );
                         case ':':
                             update_current_token();
                             return Token::punctuator( ":", TokenType::Colon );

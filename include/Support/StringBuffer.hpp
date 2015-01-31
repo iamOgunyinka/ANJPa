@@ -3,6 +3,7 @@
 
 #include <string> // C++ strings for std::stod
 #include <string.h> // C-strings
+#include <cstddef> // std::size_t
 
 namespace JParser
 {
@@ -14,9 +15,9 @@ namespace JParser
             char *data;
         private:
             char *current, *end;
-            size_t size;
+            std::size_t size;
         public:
-            explicit StringBuffer( size_t _size ):
+            explicit StringBuffer( std::size_t _size ):
                 data{ static_cast<char *>( calloc ( _size, 1 ) ) },
                 current { data },
                 end{ data + _size },
@@ -74,19 +75,19 @@ namespace JParser
                 }
             }
             
-            size_t length() const
+            std::size_t length() const
             {
                 return current - data;
             }
             
-            size_t capacity() const
+            std::size_t capacity() const
             {
                 return size;
             }
             
             void enlarge_space()
             {
-                size_t new_size = size * 2;
+                std::size_t new_size = size * 2;
                 char *new_data = static_cast< char * >( calloc( new_size, 1 ) );
                 char *new_current = new_data + length();
                 char *new_end = new_data + new_size;
@@ -99,12 +100,12 @@ namespace JParser
                 end = new_end;
                 size = new_size;
             }
-            char& operator[]( size_t pos )
+            char& operator[]( std::size_t pos )
             {
                 return data[ pos ];
             }
             
-            char const & operator[]( size_t pos ) const
+            char const & operator[]( std::size_t pos ) const
             {
                 return data[ pos ];
             }
@@ -122,11 +123,11 @@ namespace JParser
 
             int to_int() const
             {
-                return std::stod( data );
+                return std::stoi( data );
             }
             void append( char const * str )
             {
-                size_t length_of_string = strlen( str );
+                std::size_t length_of_string = strlen( str );
                 while( current + length_of_string >= end ){
                     enlarge_space();
                 }

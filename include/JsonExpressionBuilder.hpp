@@ -17,38 +17,43 @@ namespace JsonParser
     public:
         void init_parser();
         /*
-        json_expr begin() { return root->begin(); }
-        json_expr end() { return root->end(); }
+        json_expr_ptr begin() { return root->begin(); }
+        json_expr_ptr end() { return root->end(); }
 
-        const_json_expr cbegin() const { return root->cbegin(); }
-        const_json_expr cend() const { return root->cend(); }
+        const_json_expr_ptr cbegin() const { return root->cbegin(); }
+        const_json_expr_ptr cend() const { return root->cend(); }
         */
-        json_expr get_object() { return root; }
+        json_expr_ptr get_object() { return root; }
         
-        size_t size() const { return root->size(); }
+        std::size_t size() const { return root->size(); }
+        bool is_empty();
     private:
-        inline void program_block_start( json_expr & );
-        inline void statements( json_expr & );
-        inline void other_statements( json_expr & );
-        inline void other_statements_helper( json_expr & );
+        inline void program_block_start( json_expr_ptr & );
+        inline void statements( json_expr_ptr & );
+        inline void other_statements( json_expr_ptr & );
+        inline void other_statements_helper( json_expr_ptr & );
 
-        inline void stmt( json_expr & );
-        inline void value( std::string const &, json_expr & );
-        inline void array_arguments( json_expr & );
-        inline void other_array_arguments( json_expr & );
+        inline void stmt( json_expr_ptr & );
+        inline void value( std::string const &, json_expr_ptr & );
+        inline void array_arguments( json_expr_ptr & );
+        inline void other_array_arguments( json_expr_ptr & );
 
         inline void match( char ch, Token & );    
     private:
-        json_expr root;
+        json_expr_ptr root;
         Token current_token;
         Lexer lexer;
+        bool found_empty_file;
+        
     };
 
     Parser::Parser( std::string const & json_string ):
         root{ nullptr },
         current_token { ' ', TokenType::Invalid },
-        lexer{ json_string }
+        lexer{ json_string },
+        found_empty_file { false }
     {
+        init_parser();
     }
 
     Parser::~Parser()
@@ -60,7 +65,7 @@ namespace JsonParser
         program_block_start( root );
     }
 
-    void Parser::program_block_start( json_expr & node )
+    void Parser::program_block_start( json_expr_ptr & node )
     {
         current_token = lexer.get_next_token();
         if( current_token.get_type() != TokenType::Open_Braces ){
@@ -76,21 +81,27 @@ namespace JsonParser
         }
     }
 
-    void Parser::statements( json_expr & node )
+    void Parser::statements( json_expr_ptr & node )
     {
-        if( current_token.get_type() == TokenType::Close_Braces ){//We found an empty json file
+        if( current_token.get_type() == TokenType::Close_Braces ){
+            found_empty_file = true;
             return;
         }
         other_statements( node );
     }
 
-    void Parser::other_statements( json_expr & node )
+    bool Parser::is_empty()
+    {
+        return found_empty_file;
+    }
+    
+    void Parser::other_statements( json_expr_ptr & node )
     {
         stmt( node );
         other_statements_helper( node );
     }
 
-    void Parser::other_statements_helper( json_expr & node )
+    void Parser::other_statements_helper( json_expr_ptr & node )
     {
         if( current_token.get_type() != TokenType::Comma ){
             return;
@@ -100,7 +111,7 @@ namespace JsonParser
         other_statements_helper( node );
     }
 
-    void Parser::stmt( json_expr & node )
+    void Parser::stmt( json_expr_ptr & node )
     {
         if( current_token.get_type() != TokenType::String ){
             throw JErrorMessages::InvalidToken { "Expected a string before '" + current_token.get_lexeme().to_string() + "'" };
@@ -116,9 +127,9 @@ namespace JsonParser
         value( saved_token_name, node );
     }
     
-    void Parser::value( std::string const & saved_token_name, json_expr & node )
+    void Parser::value( std::string const & saved_token_name, json_expr_ptr & node )
     {
-        json_expr value_consumer = nullptr;
+        json_expr_ptr value_consumer = nullptr;
         
         switch( current_token.get_type() )
         {
@@ -138,7 +149,7 @@ namespace JsonParser
                 node->add_element( make_integer( saved_token_name, current_token.get_lexeme().to_string() ) );
                 current_token = lexer.get_next_token();
                 break;
-            case TokenType::Open_Sqbrac:
+            case TokenType::Open_SquareBracket:
                 value_consumer = make_array( saved_token_name );
                 current_token = lexer.get_next_token();
                 array_arguments( value_consumer );
@@ -156,13 +167,13 @@ namespace JsonParser
         }
     }
 
-    void Parser::array_arguments( json_expr & node )
+    void Parser::array_arguments( json_expr_ptr & node )
     {
         value( "", node ); //~ array arguments are nameless
         other_array_arguments( node );
     }
 
-    void Parser::other_array_arguments( json_expr & node )
+    void Parser::other_array_arguments( json_expr_ptr & node )
     {
         if( current_token.get_type() == TokenType::Comma ){
             current_token = lexer.get_next_token();
@@ -185,14 +196,14 @@ namespace JsonParser
         JsonDocument( std::string const & filename );
         ~JsonDocument();
 
-        json_expr parse();
+        json_expr_ptr parse();
     private:
         std::string m_filename;
         std::unique_ptr< std::ifstream > ptr;
         std::ifstream & m_file;
     };
 
-    json_expr JsonDocument::parse()
+    json_expr_ptr JsonDocument::parse()
     {
         std::string json_string{};
 
@@ -204,7 +215,6 @@ namespace JsonParser
             }
         }
         Parser parser { json_string };
-        parser.init_parser();
         return parser.get_object();
     }
     

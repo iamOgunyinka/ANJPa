@@ -10,15 +10,15 @@ namespace JParser
     class JsonExpression
     {
     public:
-        using json_expr = typename std::shared_ptr< JsonExpression >;
-        using const_json_expr = typename std::shared_ptr< JsonExpression const >;
+        using json_expr_ptr = typename std::shared_ptr< JsonExpression >;
+        using const_json_expr_ptr = typename std::shared_ptr< JsonExpression const >;
 
         virtual JsonType get_type ( void ) const = 0;
-        virtual void add_element( json_expr expr ) = 0;
+        virtual void add_element( json_expr_ptr expr ) = 0;
         virtual std::string get_key () const = 0;
         virtual std::string get_value () = 0;
-        virtual size_t size() const = 0;
-        virtual json_expr& operator []( size_t ) = 0;
+        virtual std::size_t size() const = 0;
+        virtual json_expr_ptr& operator []( std::size_t ) = 0;
 
         virtual bool isNull() const = 0;
         virtual bool isBoolean() const = 0;
@@ -28,9 +28,9 @@ namespace JParser
         virtual bool isObject() const = 0;
     };
 
-    typedef JsonExpression::json_expr json_expr;
-    typedef JsonExpression::const_json_expr const_json_expr;
-    typedef std::vector< json_expr > json_expr_array;
+    typedef JsonExpression::json_expr_ptr json_expr_ptr;
+    typedef JsonExpression::const_json_expr_ptr const_json_expr_ptr;
+    typedef std::vector< json_expr_ptr > json_expr_ptr_array;
 
     struct JsonTerminalExpression: public JsonExpression
     {
@@ -39,11 +39,11 @@ namespace JParser
     public:
         JsonTerminalExpression( ): child { nullptr, nullptr } { }
         JsonTerminalExpression( std::string const & key, std::string const & value ): child { key, value } { }
-        virtual size_t size() const override { return 1; }
+        virtual std::size_t size() const override { return 1; }
         virtual std::string get_key() const override { return child.first; }
-        virtual void add_element( json_expr ) override { }
+        virtual void add_element( json_expr_ptr ) override { }
         virtual std::string get_value() { return child.second; }
-        virtual json_expr& operator []( size_t i ) { return dynamic_cast< json_expr &>( *this ); }
+        virtual json_expr_ptr& operator []( std::size_t i ) { return dynamic_cast< json_expr_ptr &>( *this ); }
 
         virtual bool isArray() const { return false; }
         virtual bool isObject() const { return false; }
@@ -52,23 +52,23 @@ namespace JParser
     struct JsonBinaryExpression: JsonExpression
     {
     protected:
-        std::pair< std::string, json_expr_array > child;
+        std::pair< std::string, json_expr_ptr_array > child;
     public:
-        typedef json_expr_array::size_type size_type;
+        typedef json_expr_ptr_array::size_type size_type;
 
         JsonBinaryExpression( std::string const & name ): child{ name, {} } {}
         virtual std::string get_key() const override { return child.first; }
         virtual std::string get_value() override { return ""; }
-        virtual void add_element( json_expr expr ) override { child.second.push_back( expr ); }
+        virtual void add_element( json_expr_ptr expr ) override { child.second.push_back( expr ); }
 
-        json_expr_array::iterator begin() { return child.second.begin(); }
-        json_expr_array::const_iterator cbegin() const { return child.second.cbegin(); }
+        json_expr_ptr_array::iterator begin() { return child.second.begin(); }
+        json_expr_ptr_array::const_iterator cbegin() const { return child.second.cbegin(); }
 
-        json_expr_array::iterator end() { return child.second.end(); }
-        json_expr_array::const_iterator cend() const { return child.second.cend(); }
-        virtual json_expr& operator []( size_t i ) { return child.second[ i ]; }
+        json_expr_ptr_array::iterator end() { return child.second.end(); }
+        json_expr_ptr_array::const_iterator cend() const { return child.second.cend(); }
+        virtual json_expr_ptr& operator []( std::size_t i ) { return child.second[ i ]; }
         
-        virtual size_type size() const { return child.second.size(); }
+        virtual std::size_t size() const { return child.second.size(); }
 
         virtual bool isNull() const override { return false; }
         virtual bool isBoolean() const override { return false; }
@@ -91,7 +91,7 @@ namespace JParser
     {
     public:
         JArray( std::string const & name ): JsonBinaryExpression { name } { }
-        json_expr& operator []( size_t i ) { return child.second[ i ]; }
+        json_expr_ptr& operator []( std::size_t i ) { return child.second[ i ]; }
         virtual JsonType get_type() const final { return JsonType::Array; }
 
         virtual bool isArray() const { return true; }
@@ -107,7 +107,7 @@ namespace JParser
         JString( std::string const & name, std::string const & value ): JsonTerminalExpression{ name, value }
         {
         }
-        virtual json_expr& operator []( size_t i ) { return dynamic_cast< json_expr &>( *this ); }
+        virtual json_expr_ptr& operator []( std::size_t i ) { return dynamic_cast< json_expr_ptr &>( *this ); }
 
         virtual bool isNull() const override { return false; }
         virtual bool isBoolean() const override { return false; }
@@ -150,12 +150,12 @@ namespace JParser
 
     inline namespace HelperFunctions
     {
-        json_expr   make_object( std::string const & name ) { return std::make_shared< JObject > ( name ); }
-        json_expr   make_array ( std::string const & name ) { return std::make_shared< JArray > ( name ); }
-        json_expr   make_string( std::string const & key, std::string const & value ) { return std::make_shared< JString > ( key, value ); }
-        json_expr   make_integer( std::string const & name, std::string const & c ) { return std::make_shared< JInteger > ( name, c ); }
-        json_expr   make_bool( std::string const & name, std::string const &value ) { return std::make_shared< JBoolean > ( name, value ); }
-        json_expr   make_null( std::string const & name, std::string const & value ) { return std::make_shared< JNull > ( name, value ); }
+        json_expr_ptr   make_object( std::string const & name ) { return std::make_shared< JObject > ( name ); }
+        json_expr_ptr   make_array ( std::string const & name ) { return std::make_shared< JArray > ( name ); }
+        json_expr_ptr   make_string( std::string const & key, std::string const & value ) { return std::make_shared< JString > ( key, value ); }
+        json_expr_ptr   make_integer( std::string const & name, std::string const & c ) { return std::make_shared< JInteger > ( name, c ); }
+        json_expr_ptr   make_bool( std::string const & name, std::string const &value ) { return std::make_shared< JBoolean > ( name, value ); }
+        json_expr_ptr   make_null( std::string const & name, std::string const & value ) { return std::make_shared< JNull > ( name, value ); }
     }
 }
 
