@@ -1,43 +1,20 @@
 #ifndef LEXER_H_INCLUDED
 #define LEXER_H_INCLUDED
 
+#include <stdexcept>
 #include "Support/StringBuffer.hpp"
 #include "Token.hpp"
-#include <stdexcept>
 
-namespace JParser
+namespace JsonParser
 {
-    namespace JLexer
+    inline namespace JLexer
     {
         inline namespace JErrorMessages
         {
             struct InvalidToken: virtual std::runtime_error { InvalidToken( std::string const & err ): std::runtime_error( err ){} };
             struct EndOfString: virtual std::runtime_error { EndOfString( char const * ch ): std::runtime_error( ch ) {} };
         }
-        
-        namespace HelperFunctions
-        {
-            inline bool is_space( int ch )
-            {
-                return isspace( ch );
-            }
-            inline bool is_alphabet( int ch )
-            {
-                return isalpha( ch ) || ch == '_';
-            }
-            inline bool is_numeric_constant( int ch )
-            {
-                return isdigit( ch );
-            }
-            inline bool is_alphanumeric( int ch )
-            {
-                return isalnum( ch );
-            }
-        }
-        
-        using namespace HelperFunctions;
-        using namespace Support;
-        
+                
         struct Token
         {
             Token( char const &c, TokenType tk ):
@@ -175,7 +152,7 @@ namespace JParser
                 StringBuffer string_extracted {};
                 update_current_token();
                 
-                while ( true ){
+                for( ; ; ) {
                     if( current_character == '\"' ) {
                         update_current_token();
                         break;
@@ -209,7 +186,7 @@ namespace JParser
             {
                 StringBuffer buf;
 
-                while( is_numeric_constant( current_character ) ){
+                while( isdigit( current_character ) ){
                     buf.append( current_character );
                     update_current_token();
                 }
@@ -235,18 +212,19 @@ namespace JParser
             Token extract_boolean_literals()
             {
                 char const *true_bool = "true", *false_bool = "false";
+                std::size_t const true_bool_length = 4, false_bool_length = 5;
                 
                 if( current_character == 't' ){
-                    if( memcmp( strbuf.data + current_index - 1, true_bool, 4 ) == 0 ){
-                        current_index += 3;
+                    if( memcmp( strbuf.data + current_index - 1, true_bool, true_bool_length ) == 0 ){
+                        current_index += ( true_bool_length - 1 );
                         update_current_token();
                         return Token{ true_bool, TokenType::Boolean };
                     } else {
                         throw JErrorMessages::InvalidToken{ "Invalid Token found" };
                     }
                 } else if ( current_character == 'f' ){
-                    if( memcmp( strbuf.data + current_index - 1, false_bool, 5 ) == 0 ){
-                        current_index += 4;
+                    if( memcmp( strbuf.data + current_index - 1, false_bool, false_bool_length ) == 0 ){
+                        current_index += ( false_bool_length - 1 );
                         update_current_token();
                         return Token{ false_bool, TokenType::Boolean };
                     } else {

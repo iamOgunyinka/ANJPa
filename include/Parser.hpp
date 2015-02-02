@@ -1,11 +1,11 @@
 #ifndef PARSER_H_INCLUDED
 #define PARSER_H_INCLUDED
 
-#include "Lexer.hpp"
 #include <memory>
 #include <vector>
+#include "Lexer.hpp"
 
-namespace JParser
+namespace JsonParser
 {
     class JsonExpression
     {
@@ -39,6 +39,8 @@ namespace JParser
     public:
         JsonTerminalExpression( ): child { nullptr, nullptr } { }
         JsonTerminalExpression( std::string const & key, std::string const & value ): child { key, value } { }
+        virtual ~JsonTerminalExpression() = default;
+        
         virtual std::size_t size() const override { return 1; }
         virtual std::string get_key() const override { return child.first; }
         virtual void add_element( json_expr_ptr ) override { }
@@ -57,6 +59,8 @@ namespace JParser
         typedef json_expr_ptr_array::size_type size_type;
 
         JsonBinaryExpression( std::string const & name ): child{ name, {} } {}
+        ~JsonBinaryExpression() = default;
+        
         virtual std::string get_key() const override { return child.first; }
         virtual std::string get_value() override { return ""; }
         virtual void add_element( json_expr_ptr expr ) override { child.second.push_back( expr ); }
@@ -98,8 +102,6 @@ namespace JParser
         virtual bool isObject() const { return false; }
     };
 
-    using namespace Support;
-    
     struct JString: public JsonTerminalExpression
     {
     public:

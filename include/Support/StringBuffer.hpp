@@ -1,13 +1,13 @@
 #ifndef STRING_BUFFER_H_INCLUDED
 #define STRING_BUFFER_H_INCLUDED
 
-#include <string> // C++ strings for std::stod
-#include <string.h> // C-strings
-#include <cstddef> // std::size_t
+#include <string>
+#include <string.h>
+#include <cstddef>
 
-namespace JParser
+namespace JsonParser
 {
-    namespace Support
+    inline namespace Support
     {
         struct StringBuffer
         {
@@ -47,7 +47,6 @@ namespace JParser
                 strbuf.size = 0;
             }
 
-            //~ Too lazy to implement these
             StringBuffer& operator=( StringBuffer const & strbuf ) = delete;
             StringBuffer( StringBuffer const & ) = delete;
 

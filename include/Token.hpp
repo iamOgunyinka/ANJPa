@@ -1,7 +1,7 @@
 #ifndef TOKEN_H_INCLUDED
 #define TOKEN_H_INCLUDED
 
-namespace JParser
+namespace JsonParser
 {
     enum class TokenType
     {

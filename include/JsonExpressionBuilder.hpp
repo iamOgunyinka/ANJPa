@@ -1,21 +1,17 @@
 #ifndef JSON_EXPRESSION_BUILDER_H_INCLUDED
 #define JSON_EXPRESSION_BUILDER_H_INCLUDED
 
-#include "Parser.hpp"
 #include <fstream>
+#include "Parser.hpp"
 
 namespace JsonParser
 {
-    using namespace JParser;
-    using namespace JLexer;
-    
     struct Parser
     {
     public:
         Parser( std::string const & json_string );
         ~Parser();
     public:
-        void init_parser();
         /*
         json_expr_ptr begin() { return root->begin(); }
         json_expr_ptr end() { return root->end(); }
@@ -53,16 +49,11 @@ namespace JsonParser
         lexer{ json_string },
         found_empty_file { false }
     {
-        init_parser();
+        program_block_start( root );
     }
 
     Parser::~Parser()
     {
-    }
-
-    void Parser::init_parser()
-    {
-        program_block_start( root );
     }
 
     void Parser::program_block_start( json_expr_ptr & node )
@@ -77,7 +68,7 @@ namespace JsonParser
         statements( node );
 
         if( current_token.get_type() != TokenType::Close_Braces ) {
-            throw JErrorMessages::InvalidToken { "In block...start...Invalid Token found" };
+            throw JErrorMessages::InvalidToken { "Invalid Token found" };
         }
     }
 
@@ -169,7 +160,7 @@ namespace JsonParser
 
     void Parser::array_arguments( json_expr_ptr & node )
     {
-        value( "", node ); //~ array arguments are nameless
+        value( "", node );
         other_array_arguments( node );
     }
 
