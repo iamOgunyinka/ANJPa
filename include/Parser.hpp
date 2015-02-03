@@ -35,16 +35,17 @@ namespace JsonParser
     struct JsonTerminalExpression: public JsonExpression
     {
     protected:
-        std::pair< std::string const , std::string const > child;
+        std::string m_key;
+        std::string m_value;
     public:
-        JsonTerminalExpression( ): child { nullptr, nullptr } { }
-        JsonTerminalExpression( std::string const & key, std::string const & value ): child { key, value } { }
+        JsonTerminalExpression( ): m_key { }, m_value { } {}
+        JsonTerminalExpression( std::string const & key, std::string const & value ): m_key { key }, m_value{ value } { }
         virtual ~JsonTerminalExpression() = default;
         
         virtual std::size_t size() const override { return 1; }
-        virtual std::string get_key() const override { return child.first; }
+        virtual std::string get_key() const override { return m_key; }
         virtual void add_element( json_expr_ptr ) override { }
-        virtual std::string get_value() { return child.second; }
+        virtual std::string get_value() { return m_value; }
         virtual json_expr_ptr& operator []( std::size_t i ) { return dynamic_cast< json_expr_ptr &>( *this ); }
 
         virtual bool isArray() const { return false; }
