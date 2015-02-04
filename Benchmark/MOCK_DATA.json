@@ -1,5 +1,4 @@
-{
-    "Names" : [{"id":1,"first_name":"Emily","last_name":"Mccoy","email":"emccoy0@huffingtonpost.com","country":"Latvia","ip_address":"126.13.32.146"},
+[{"id":1,"first_name":"Emily","last_name":"Mccoy","email":"emccoy0@huffingtonpost.com","country":"Latvia","ip_address":"126.13.32.146"},
 {"id":2,"first_name":"Teresa","last_name":"Burke","email":"tburke1@engadget.com","country":"Czech Republic","ip_address":"44.62.185.165"},
 {"id":3,"first_name":"William","last_name":"Taylor","email":"wtaylor2@joomla.org","country":"Australia","ip_address":"129.129.114.6"},
 {"id":4,"first_name":"Norma","last_name":"Black","email":"nblack3@yelp.com","country":"Venezuela","ip_address":"180.102.116.112"},
@@ -999,4 +998,3 @@
 {"id":998,"first_name":"Tina","last_name":"Lane","email":"tlanerp@t.co","country":"Indonesia","ip_address":"47.98.46.252"},
 {"id":999,"first_name":"Louise","last_name":"Bailey","email":"lbaileyrq@pinterest.com","country":"Brazil","ip_address":"103.38.39.46"},
 {"id":1000,"first_name":"Sean","last_name":"Taylor","email":"staylorrr@booking.com","country":"Guatemala","ip_address":"137.131.85.67"}]
-}

@@ -30,8 +30,8 @@ namespace JsonParser
         inline void other_statements_helper( json_expr_ptr & );
 
         inline void stmt( json_expr_ptr & );
-        inline void value( std::string const &, json_expr_ptr & );
-        inline void array_arguments( json_expr_ptr & );
+        inline void value( json_expr_ptr &, std::string const & );
+        inline void array_arguments( json_expr_ptr &, std::string const &name = "" );
         inline void other_array_arguments( json_expr_ptr & );
 
         inline void match( char ch, Token & );    
@@ -59,16 +59,29 @@ namespace JsonParser
     void Parser::program_block_start( json_expr_ptr & node )
     {
         current_token = lexer.get_next_token();
-        if( current_token.get_type() != TokenType::Open_Braces ){
-            throw JErrorMessages::InvalidToken { "Invalid Token found" };
-        }
-        node = make_object( "__ROOT_ELEMENT__" );
+        std::string const & node_name = "__ROOT_ELEMENT__";
 
-        current_token = lexer.get_next_token();
-        statements( node );
+        if( current_token.get_type() == TokenType::Open_Braces ){
+            node = make_object( node_name );
 
-        if( current_token.get_type() != TokenType::Close_Braces ) {
-            throw JErrorMessages::InvalidToken { "Invalid Token found" };
+            current_token = lexer.get_next_token();
+            statements( node );
+
+            if( current_token.get_type() != TokenType::Close_Braces ){
+                throw JErrorMessages::InvalidToken { "Invalid Token found at the end of document. Expected a closing braces '}'" };
+            }
+        } else if ( current_token.get_type() == TokenType::Open_SquareBracket ){
+            node = make_array( node_name );
+            
+            current_token = lexer.get_next_token();
+            array_arguments( node );
+
+            if( current_token.get_type() != TokenType::Close_SquareBracket ){
+                throw JErrorMessages::InvalidToken { "Invalid Token found at the end of document. "
+                                                        "Expected a closing square bracket ']'" };
+            }
+        } else {
+            throw JErrorMessages::InvalidToken { "Invalid Token found. Expected a Json Object at the start of document." };
         }
     }
 
@@ -115,10 +128,10 @@ namespace JsonParser
             throw JErrorMessages::InvalidToken{ "Expected a colon seperator before " + current_token.get_lexeme().to_string() };
         }
         current_token = lexer.get_next_token();
-        value( saved_token_name, node );
+        value( node, saved_token_name );
     }
     
-    void Parser::value( std::string const & saved_token_name, json_expr_ptr & node )
+    void Parser::value( json_expr_ptr & node, std::string const & saved_token_name )
     {
         json_expr_ptr value_consumer = nullptr;
         
@@ -158,9 +171,9 @@ namespace JsonParser
         }
     }
 
-    void Parser::array_arguments( json_expr_ptr & node )
+    void Parser::array_arguments( json_expr_ptr & node, std::string const &name )
     {
-        value( "", node );
+        value( node, name );
         other_array_arguments( node );
     }
 
@@ -168,7 +181,7 @@ namespace JsonParser
     {
         if( current_token.get_type() == TokenType::Comma ){
             current_token = lexer.get_next_token();
-            value( "", node );
+            value( node, "" );
             other_array_arguments( node );
         }
     }
