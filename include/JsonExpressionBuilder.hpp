@@ -12,13 +12,13 @@ namespace JsonParser
         Parser( std::string const & json_string );
         ~Parser();
     public:
-        /*
+        
         json_expr_ptr begin() { return root->begin(); }
         json_expr_ptr end() { return root->end(); }
 
         const_json_expr_ptr cbegin() const { return root->cbegin(); }
         const_json_expr_ptr cend() const { return root->cend(); }
-        */
+
         json_expr_ptr get_object() { return root; }
         
         std::size_t size() const { return root->size(); }
@@ -215,7 +215,6 @@ namespace JsonParser
             std::string lines{};
             while( std::getline( m_file, lines ) ){
                 json_string += lines;
-                json_string += "\n";
             }
         }
         Parser parser { json_string };
